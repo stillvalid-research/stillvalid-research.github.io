@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4f1">
+  <meta name="description" content="StillValid — 살 때 세운 이유를 회사의 공식 발표와 다시 비교하는 모의 투자 경험">
+  <title>StillValid · 내 이유는 아직 유효할까?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-top">
+      <a class="mock-brand" href="#intro"><span class="market-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16.5 9 11l4 3 6-8"/><path d="M16 6h3v3"/></svg></span>모의 투자</a>
+      <div class="site-meta"><span>가상 투자금 1,000만 원 · 예시 데이터</span><span class="language" aria-label="언어 선택"><button type="button" data-lang="en" disabled title="영어 번역 준비 중">EN</button><button type="button" data-lang="ko" class="on">KO</button></span></div>
+    </header>
+    <main class="workspace">
+      <section class="market-pane" id="market" aria-label="모의 투자 화면"></section>
+      <section class="still-pane" aria-label="StillValid"><div class="still-top"><a class="still-logo" href="#intro"><span class="s-mark">S</span><strong>StillValid</strong></a><nav><button type="button" data-nav="portfolio">내 주식</button><button type="button" data-nav="history">기록</button></nav></div><div id="panel" class="panel-content" aria-live="polite"></div><div class="panel-foot">회사 공식 발표만 보고 판단해요 · 사고팔라고 권하지 않아요</div></section>
+    </main>
+    <footer class="site-footer"><span>내 기준 · 살 때 내 기준을 세운 종목 · 모든 종목은 가상이에요</span><button type="button" id="resetDemo">시연 처음부터</button></footer>
+  </div>
+</body>
+</html>
