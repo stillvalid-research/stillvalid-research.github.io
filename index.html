@@ -10,13 +10,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script defer src="en.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
   <div class="site-shell">
     <header class="site-top">
-      <a class="mock-brand" href="#intro"><span class="market-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16.5 9 11l4 3 6-8"/><path d="M16 6h3v3"/></svg></span>모의 투자</a>
-      <div class="site-meta"><span>가상 투자금 1,000만 원 · 예시 데이터</span><span class="language" aria-label="언어 선택"><button type="button" data-lang="en" disabled title="영어 번역 준비 중">EN</button><button type="button" data-lang="ko" class="on">KO</button></span></div>
+      <a class="mock-brand" href="#intro"><span class="market-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16.5 9 11l4 3 6-8"/><path d="M16 6h3v3"/></svg></span><span data-copy="brand">모의 투자</span></a>
+      <div class="site-meta"><span data-copy="funds">가상 투자금 1,000만 원 · 예시 데이터</span><span class="language" aria-label="언어 선택"><button type="button" data-lang="en" lang="en">EN</button><button type="button" data-lang="ko" lang="ko" class="on">KO</button></span></div>
     </header>
     <main class="workspace">
       <section class="market-pane" id="market" aria-label="모의 투자 화면"></section>

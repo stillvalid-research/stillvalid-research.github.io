@@ -18,8 +18,8 @@
   const $ = q => document.querySelector(q);
   const escapeHtml = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const save = () => localStorage.setItem(KEY,JSON.stringify(s));
-  const greenName = id => greenChoices.find(x=>x.id===id)?.title || '';
-  const riskName = id => riskChoices.find(x=>x.id===id)?.title || '';
+  const greenName = id => s.lang==='en' ? window.StillValidEnglish.name(id) : greenChoices.find(x=>x.id===id)?.title || '';
+  const riskName = id => s.lang==='en' ? window.StillValidEnglish.riskName(id) : riskChoices.find(x=>x.id===id)?.title || '';
   const flag = kind => `<span class="flag-symbol" aria-hidden="true"></span>${kind} flag`;
   const eyebrow = (t) => `<div class="eyebrow">${t}</div>`;
   const lead = t => `<p class="lead">${t}</p>`;
@@ -30,15 +30,16 @@
   const source = t => `<div class="source-detail">${t}</div>`;
   const current = () => s.versions[s.versions.length-1];
   const redHit = () => s.event==='cb' && (s.risk || 'dilution')==='dilution' && !s.ack;
-  const statusNow = () => redHit() ? '다시 볼 때예요' : '기다려도 돼요';
+  const statusNow = () => redHit() ? (s.lang==='en'?'Time to reconsider':'다시 볼 때예요') : (s.lang==='en'?'You may wait':'기다려도 돼요');
   const risk = () => riskChoices.find(x=>x.id===s.risk);
   function setScene(scene){s.scene=scene;save();render();$('#panel').scrollTop=0;location.hash=scene;}
   function chart(down){
     const points = down ? '6,44 31,40 55,38 78,32 102,35 126,29 150,30 174,25 198,25 222,30 246,25 270,29 294,30 318,36 342,41 366,46 390,48 414,56 438,66 462,72 486,84 510,90' : '6,88 31,86 55,89 78,82 102,80 126,83 150,75 174,72 198,76 222,68 246,64 270,67 294,58 318,55 342,59 366,52 390,45 414,43 438,48 462,39 486,36 510,31';
-    return `<div class="chart-wrap"><svg viewBox="0 0 520 118" preserveAspectRatio="none" role="img" aria-label="${down?'가격 하락을 보여 주는':'가격 상승을 보여 주는'} 모의 주가 차트"><path class="grid" d="M6 20 H514 M6 60 H514 M6 100 H514"/><polyline class="trend ${down?'down':''}" points="${points}"/></svg><div class="chart-months"><span>${down?'10월':'8월'}</span><span>${down?'11월':'9월'}</span><span>${down?'12월':'10월'}</span><span>${down?'1월':'11월'}</span></div></div>`;
+    return `<div class="chart-wrap"><svg viewBox="0 0 520 118" preserveAspectRatio="none" role="img" aria-label="${s.lang==='en'?(down?'Simulated falling price chart':'Simulated rising price chart'):(down?'가격 하락을 보여 주는':'가격 상승을 보여 주는')}${s.lang==='en'?'':' 모의 주가 차트'}"><path class="grid" d="M6 20 H514 M6 60 H514 M6 100 H514"/><polyline class="trend ${down?'down':''}" points="${points}"/></svg><div class="chart-months"><span>${s.lang==='en'?(down?'Oct':'Aug'):(down?'10월':'8월')}</span><span>${s.lang==='en'?(down?'Nov':'Sep'):(down?'11월':'9월')}</span><span>${s.lang==='en'?(down?'Dec':'Oct'):(down?'12월':'10월')}</span><span>${s.lang==='en'?(down?'Jan':'Nov'):(down?'1월':'11월')}</span></div></div>`;
   }
   function market(){
     const pane=$('#market'); const holding=['portfolio','price','evidence','lawsuit','cb','ceo','reflect','choice','confirmed','history'].includes(s.scene);
+    if(s.lang==='en'){pane.innerHTML=window.StillValidEnglish.market({s,status,redHit,statusNow,chart});return;}
     if(holding){
       const rate=['price','evidence','lawsuit','cb','ceo','reflect','choice','confirmed','history'].includes(s.scene)?'−15.0%':'+1.6%';
       pane.innerHTML=`<div class="market-head"><h2>보유 종목</h2><div class="subtle">가상 투자금 1,000만 원 · 3종목</div></div><div class="market-body"><table class="market-table"><thead><tr><th>종목</th><th>내 기준 상태</th><th>보유</th><th>평가 금액 · 수익률</th></tr></thead><tbody><tr class="highlight"><td class="stock">한빛모빌리티 <span class="tag">내 기준</span></td><td>${status(statusNow(),redHit()?'red':'')}</td><td>40주</td><td>${rate==='−15.0%'?'421,600원':'504,000원'} · ${rate}</td></tr><tr><td class="stock">도담식품 <span class="tag">내 기준</span></td><td>${status('판단하기 어려워요','blue')}</td><td>20주</td><td>1,124,000원 · +6.0%</td></tr><tr><td class="stock">가람전자</td><td>${status('내 기준 없음','gray')}</td><td>8주</td><td>912,000원 · −2.0%</td></tr></tbody></table><div class="market-note">내 기준을 세운 종목 · 모든 종목은 가상이에요.</div></div>`;
@@ -48,6 +49,7 @@
     pane.innerHTML=`<div class="market-head"><div class="market-titlebar"><div><h2>한빛모빌리티</h2><div class="subtle">코스닥 · 전기차 부품 · 가상 종목</div></div><div class="market-tabs">${['chart','orderbook','disclosures','about'].map((x,i)=>`<button type="button" data-market-tab="${x}" class="${s.marketTab===x?'active':''}">${['차트','호가','공시','정보'][i]}</button>`).join('')}</div></div></div><div class="market-body ${['q1','clarify','q2','q3','review'].includes(s.scene)?'muted-market':''}">${s.marketTab==='chart'?`<div class="quote"><div><span class="price">12,400원</span><span class="delta">▲ 120원 (+0.98%)</span></div><div class="period">${['1일','1주','3개월','1년'].map(p=>`<button type="button" data-period="${p}" class="${s.period===p?'active':''}">${p}</button>`).join('')}</div></div>${chart(down)}`:s.marketTab==='disclosures'?`<div class="plain-card"><strong>최근 공시</strong><p>2025년 11월 14일 · 분기보고서</p><p>2025년 8월 14일 · 반기보고서</p></div><div class="chart-wrap"></div>`:s.marketTab==='orderbook'?`<div class="plain-card"><strong>호가 · 모의 화면</strong><p>매수 12,400원 · 매도 12,410원</p></div><div class="chart-wrap"></div>`:`<div class="plain-card"><strong>한빛모빌리티</strong><p>전기차 부품을 만드는 가상 회사입니다. 오른쪽 StillValid 경험을 위한 예시 데이터예요.</p></div><div class="chart-wrap"></div>`}<div class="order-card"><div class="order-lines"><span>주문 유형</span><span>지정가 매수</span><span>주문 가격</span><span>12,400원</span><span>수량</span><span>40주</span><strong>주문 금액</strong><strong>496,000원</strong></div><div class="order-action"><button type="button" data-action="mockOrder">매수 주문</button><small>주문 확인 대기 중 · 모의 화면</small></div></div></div>`;
   }
   function content(){
+    if(s.lang==='en')return window.StillValidEnglish.content({s,btn,row,card,status,source,eyebrow,lead,escapeHtml,redHit,statusNow});
     switch(s.scene){
     case 'intro': return `${eyebrow('한빛모빌리티 · 코스닥 · 전기차 부품 · 12,400원')}<h1>한빛모빌리티를 사기 전에<br>AI와 함께 내 flag를 세워 볼까요?</h1>${lead('질문 3개면 끝나요. 주가가 흔들리거나 회사 공식 발표가 나오면 이 flag로 같이 확인해 드려요.')}<div class="step-list"><div class="step-row"><span class="step-num">1</span><div><b>Green flag · 왜 사나요</b><span>직접 고른 뒤, AI와 공시로 확인할 방법을 정해요.</span></div></div><div class="step-row red"><span class="step-num">2</span><div><b>Red flag · 이런 일이 생기면 다시 볼래요</b><span>살 때 공시에서 근거가 있는 후보를 보여 드려요.</span></div></div><div class="step-row gray"><span class="step-num">3</span><div><b>가격과 여유자금</b><span>당시 생각을 기록해요. 판정에는 쓰지 않아요.</span></div></div></div>${row(btn('사기 전에 내 기준 세우기 (1분)','next'),btn('나중에 할게요','skip','text-button'))}`;
     case 'q1': return `${eyebrow('질문 1 / 3 · <span class="green-text">Green flag · 산 이유</span>')}<h1>이 회사, 앞으로 무엇이 좋아질까요?</h1>${lead('두 개까지 고를 수 있어요. 먼저 고른 게 가장 큰 이유예요. 나중에 회사 공식 발표로 확인할 수 있는 것만 있어요.')}<div class="choice-grid">${greenChoices.map(g=>`<button type="button" class="choice-card ${s.greens.includes(g.id)?'selected green':''}" data-green="${g.id}"><span class="choice-top"><b>${g.title}</b>${s.greens[0]===g.id?'<span class="mini-badge">가장 큰 이유</span>':s.greens[1]===g.id?'<span class="mini-badge">함께 볼 이유</span>':''}</span><small>${g.desc}</small></button>`).join('')}</div><div class="helper"><b>AI</b><span>먼저 직접 골라 주세요. 다음 단계에서 공시로 어떻게 확인할지 정해요. 지난 실적만 보고 제가 먼저 권하지는 않아요.</span></div>${row(btn('다음 · AI와 기준 정하기','next','primary',!s.greens.length))}`;
@@ -59,7 +61,7 @@
     case 'portfolio': return `${eyebrow('12월 1일 · 3종목')}<h1>내 주식</h1>${lead('살 때 세운 기준으로 지금 상태를 보여 드려요. 수익률은 이 판정에 쓰지 않아요.')}<div class="story-list"><div class="story-card"><div class="topline"><b>한빛모빌리티</b>${status(statusNow(),redHit()?'red':'')}</div><p>Green flag ‘${greenName(s.greens[0]||'profit')}’를 확인할 발표가 아직 없고, ${redHit()?'Red flag와 연결되는 공시가 나왔어요.':'Red flag도 생기지 않았어요.'}</p><p>다음 확인 · 2026년 3월 말 사업보고서</p></div><div class="story-card"><div class="topline"><b>도담식품</b>${status('판단하기 어려워요','blue')}</div><p>매출의 22%를 내는 공장이 3개월 영업정지됐어요. 연간 매출이 늘지는 이 발표만으로 알 수 없어요.</p></div><div class="story-card"><div class="topline"><b>가람전자</b>${status('내 기준 없음','gray')}</div><p>살 때 기준을 세우지 않았어요.</p></div></div>${row(btn('다음 장면 · 1월 15일','next'),btn('기록 보기','history','secondary'))}`;
     case 'price': return `${eyebrow('한빛모빌리티 · 주가 −15% · 1월 15일')}<div style="margin-bottom:12px">${status('기다려도 돼요 · 이전과 같음')}</div><h1>내 기준을 바꿀 공시는<br>아직 없어요</h1>${lead('가격이 움직인 이유는 공시 밖에 있을 수 있어요.')}<div class="section-label">내가 정한 flag</div>${card('green',`<b>${greenName(s.greens[0]||'profit')}</b>`)}${card('red',`<b>${riskName(s.risk||'dilution')}</b>`)}<div class="plain-card"><strong>이번에 확인한 사실</strong><br>주가 −15% · 새 공시는 없었어요<br><br>가격 변화는 판정에 쓰지 않아요. Green flag는 다음 사업보고서에서 확인해요.</div>${row(btn('확인한 근거 보기','evidence'),btn('다음 장면','lawsuit','secondary'))}`;
     case 'evidence': return `${eyebrow('1월 15일 · 확인한 근거')}<h1>왜 그대로인가요?</h1><div class="timeline"><button type="button"><span class="dot green"></span><span><b>살 때 세운 기준</b><small>Green flag ${s.greens.length}개 · Red flag 1개</small></span><time>11월 12일</time></button><button type="button"><span class="dot"></span><span><b>분기보고서 검토</b><small>내 Red flag에 해당하는 새 사실 없음</small></span><time>11월 14일</time></button><button type="button"><span class="dot"></span><span><b>주가 −15%</b><small>공시 밖 가격 변화 · 판정 변화 없음</small></span><time>1월 15일</time></button></div><div class="plain-card">영업이익과 매출이 실제 늘었는지는 다음 사업보고서에서 확인해요. 확인 전 사실을 확인 완료로 표시하지 않아요.</div>${row(btn('다음 장면 · 특허 소송','lawsuit'),btn('내 주식','portfolio','secondary'))}`;
-    case 'lawsuit': return `${eyebrow('한빛모빌리티 · 1월 28일')}<h1>새 공시가 나왔지만<br>내 flag와 직접 관련 없어요</h1>${lead('특허 소송 제기 공시가 나왔어요. 살 때 고른 Red flag는 지분 희석이고, 이 소송만으로 Green flag의 연간 실적을 확인할 수도 없어요.')}<div class="plain-card"><strong>확인한 사실</strong><br>특허 소송 제기 · 1월 28일<br><br><strong>내 기준과의 연결</strong><br>직접 관련 없음 · 이전 상태 유지</div><div class="plain-card">${status('기다려도 돼요')}<p style="margin:8px 0 0">새로운 공시가 나왔다는 이유만으로 판정을 바꾸지 않아요.</p></div>${row(btn('다음 장면 · 전환사채 발행','cb'),btn('내 기준 보기','evidence','secondary'))}`;
+    case 'lawsuit': return `${eyebrow('한빛모빌리티 · 1월 28일')}<h1>새 공시가 나왔지만<br>내 flag와 직접 관련 없어요</h1>${lead('특허 소송 제기 공시가 나왔어요. 이 공시만으로 내가 고른 Red flag의 금전적 영향이나 Green flag의 연간 실적을 확정할 수 없어요.')}<div class="plain-card"><strong>확인한 사실</strong><br>특허 소송 제기 · 1월 28일<br><br><strong>내 기준과의 연결</strong><br>직접 관련 없음 · 이전 상태 유지</div><div class="plain-card">${status('기다려도 돼요')}<p style="margin:8px 0 0">새로운 공시가 나왔다는 이유만으로 판정을 바꾸지 않아요.</p></div>${row(btn('다음 장면 · 전환사채 발행','cb'),btn('내 기준 보기','evidence','secondary'))}`;
     case 'cb': if((s.risk||'dilution')!=='dilution') return `${eyebrow('한빛모빌리티 · 2월 10일 · 전환사채 발행 결정')}<div style="margin-bottom:12px">${status('기다려도 돼요')}</div><h1>새 공시가 내 Red flag와<br>직접 연결되지는 않아요</h1>${lead('전환사채 300억 원 발행 결정이 나왔어요. 내가 고른 Red flag는 ‘'+riskName(s.risk)+'’이므로 이번 공시로 기준 충돌을 표시하지 않아요.')}${card('red',`<b>내가 고른 기준 · ${riskName(s.risk)}</b><small>${escapeHtml(risk()?.evidence||'')}</small>`)}<div class="plain-card">새 공시가 나와도 선택한 기준과 직접 관련이 없으면 이전 상태를 유지해요.</div>${row(btn('기록 보기','history'),btn('기준 다시 고르기','q2','secondary'))}`; return `${eyebrow('한빛모빌리티 · 2월 10일 · 전환사채 발행 결정')}<div style="margin-bottom:12px">${status('다시 볼 때예요','red')}</div><h1>살 때 정한 Red flag와<br>연결되는 일이 생겼어요</h1>${lead('전환사채 발행 결정은 새 주식이 생겨 지분 비율이 줄 수 있다는 기준과 연결돼요. 주가 변화나 다른 공시는 이 판단에 쓰지 않았어요.')}${card('red',`<small>살 때 정한 기준</small><b>${riskName(s.risk||'dilution')}</b><small>이번 공시 · 전환사채 300억 원 발행 결정 · 전환 시 약 300만 주, 현재 주식 총수 대비 약 8% 가능</small>`)}<div class="plain-card"><strong>회사 설명 · 아직 확인 안 됨</strong><br>새 생산 설비에 쓸 예정</div><div class="helper"><b>AI</b><span>팔라는 뜻은 아니에요. 살 때 ‘이런 일이 생기면 다시 보겠다’고 정해 둬서 알려 드리는 거예요. 결정은 직접 해요.</span></div>${row(btn('다음 장면 · 대표 변경','ceo'),btn('지금 돌아보기','reflect','secondary'))}${source('시연용 가상 공시입니다. 공시의 수치와 AI 응답은 연구 흐름을 설명하기 위한 예시입니다.')}`;
     case 'ceo': if((s.risk||'dilution')!=='dilution') return `${eyebrow('한빛모빌리티 · 2월 14일')}<h1>대표 변경도 내 flag와<br>직접 관련 없어요</h1>${lead('이전 상태를 유지해요. 새 공시가 이전 판정을 자동으로 지우거나 뒤집지는 않아요.')}${row(btn('기록 보기','history'))}`; return `${eyebrow('한빛모빌리티 · 2월 14일')}<div style="margin-bottom:12px">${status('다시 볼 때예요','red')}</div><h1>새 공시가 와도<br>확인할 일은 남아 있어요</h1>${lead('회사 대표 변경은 내 flag와 직접 연결되지 않아요. 2월 10일의 Red flag는 내가 확인할 때까지 유지돼요.')}<div class="timeline"><button type="button" class="red"><span class="dot"></span><span><b>전환사채 발행 결정</b><small>Red flag와 연결 · 아직 확인 전</small></span><time>2월 10일</time></button><button type="button"><span class="dot"></span><span><b>회사 대표 변경</b><small>내 flag와 직접 관련 없음</small></span><time>2월 14일</time></button></div>${row(btn('내 기준 다시 보기','reflect'),btn('기록','history','secondary'))}`;
     case 'reflect': return `${eyebrow('한빛모빌리티 · 2월 15일')}<h1>이 일을 알고도,<br>처음 기대는 그대로인가요?</h1>${lead('내가 정한 기준과 새 사실을 나란히 놓고 생각해 보세요. 사고팔지는 직접 결정해요.')}<div class="plain-card"><strong>처음 기대</strong><br>${greenName(s.greens[0]||'profit')}<br><br><strong>지금 사실</strong><br>전환사채 300억 원 발행 결정 · 전환 시 주식 총수 대비 약 8% 가능<br><br><strong>회사 설명 · 확인 안 됨</strong><br>새 생산 설비에 쓸 예정</div><div class="question-block"><b>무슨 일이 생겼나요?</b><p class="lead">살 때 걱정했던 지분 희석 가능성이 있는 결정이 공시됐어요.</p></div><div class="question-block"><b>내 기대에는 어떤 영향이 있나요?</b><p class="lead">사업 성장 기대와 지분 희석 가능성을 함께 다시 생각해야 해요.</p></div>${row(btn('어떻게 할지 고르기','choice'))}`;
@@ -71,13 +73,22 @@
   }
   function render(){
     market(); $('#panel').innerHTML=content();
+    document.documentElement.lang=s.lang;
+    document.title=s.lang==='en'?'StillValid · Are my reasons still valid?':'StillValid · 내 이유는 아직 유효할까?';
+    $('meta[name="description"]').content=s.lang==='en'?'StillValid — revisit the reasons you bought a stock against official company filings in a simulated investing journey.':'StillValid — 살 때 세운 이유를 회사의 공식 발표와 다시 비교하는 모의 투자 경험';
+    const copy=s.lang==='en'?{brand:'Simulated trading',funds:'Virtual funds ₩10,000,000 · Sample data',navStocks:'My stocks',navHistory:'History',foot:'Based on official company filings · Not a buy or sell recommendation',footer:'My criteria · Stocks with criteria set at purchase · All stocks are fictional',reset:'Restart demo'}:{brand:'모의 투자',funds:'가상 투자금 1,000만 원 · 예시 데이터',navStocks:'내 주식',navHistory:'기록',foot:'회사 공식 발표만 보고 판단해요 · 사고팔라고 권하지 않아요',footer:'내 기준 · 살 때 내 기준을 세운 종목 · 모든 종목은 가상이에요',reset:'시연 처음부터'};
+    $('[data-copy="brand"]').textContent=copy.brand;$('[data-copy="funds"]').textContent=copy.funds;
+    $('[data-nav="portfolio"]').textContent=copy.navStocks;$('[data-nav="history"]').textContent=copy.navHistory;
+    $('.panel-foot').textContent=copy.foot;$('.site-footer span').textContent=copy.footer;$('#resetDemo').textContent=copy.reset;
+    $('.language').setAttribute('aria-label',s.lang==='en'?'Choose language':'언어 선택');
+    $('#market').setAttribute('aria-label',s.lang==='en'?'Simulated trading screen':'모의 투자 화면');
     document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===s.scene));
     document.querySelectorAll('[data-lang]').forEach(b=>b.classList.toggle('on',b.dataset.lang===s.lang));
   }
   document.addEventListener('input',e=>{if(e.target.id==='memo'){s.memo=e.target.value;save();}});
   document.addEventListener('click',e=>{
     const b=e.target.closest('button'); if(!b)return;
-    if(b.dataset.lang){s.lang=b.dataset.lang;save();if(s.lang==='en')alert('English copy is being prepared for the research prototype. The Korean journey remains available.');render();return;}
+    if(b.dataset.lang){s.lang=b.dataset.lang;save();render();return;}
     if(b.dataset.nav){setScene(b.dataset.nav);return;}
     if(b.dataset.marketTab){s.marketTab=b.dataset.marketTab;save();market();return;}
     if(b.dataset.period){s.period=b.dataset.period;save();market();return;}
@@ -89,7 +100,7 @@
     if(b.dataset.decision){s.decision=b.dataset.decision;save();render();return;}
     const a=b.dataset.action;
     if(!a)return;
-    if(a==='mockOrder'){alert('모의 화면입니다. 실제 주문은 실행되지 않아요.');return;}
+    if(a==='mockOrder'){alert(s.lang==='en'?'This is a simulation. No actual order is placed.':'모의 화면입니다. 실제 주문은 실행되지 않아요.');return;}
     if(a==='saveCriteria'){
       s.versions.push({greens:[...s.greens],scope:s.scope,risk:s.risk,memo:s.memo,priceView:s.priceView,funds:s.funds,date:s.versions.length?'2월 15일':'11월 12일'});setScene('saved');return;
     }
@@ -108,7 +119,7 @@
       setScene(a);return;
     }
   });
-  $('#resetDemo').addEventListener('click',()=>{if(confirm('시연 기록을 처음부터 다시 시작할까요?')){s={...defaults};save();setScene('intro');}});
+  $('#resetDemo').addEventListener('click',()=>{if(confirm(s.lang==='en'?'Restart the demo from the beginning?':'시연 기록을 처음부터 다시 시작할까요?')){const lang=s.lang;s={...defaults,lang};save();setScene('intro');}});
   window.addEventListener('hashchange',()=>{const name=location.hash.slice(1);if(['intro','q1','clarify','q2','q3','review','saved','portfolio','price','evidence','lawsuit','cb','ceo','reflect','choice','confirmed','history'].includes(name)&&name!==s.scene){s.scene=name;save();render();}});
   const initial=location.hash.slice(1);if(initial&&['intro','q1','clarify','q2','q3','review','saved','portfolio','price','evidence','lawsuit','cb','ceo','reflect','choice','confirmed','history'].includes(initial))s.scene=initial;
   render();
